@@ -1,4 +1,4 @@
-# Level 2 — Lensing Wire (JSON / NATS) (V1.5)
+# Level 2 — Lensing Wire (JSON / NATS) (V1.6)
 
 | Language | Document |
 |----------|----------|
@@ -9,7 +9,7 @@
 >
 > **Prerequisite:** [Level 1](./level-1-deeplink_en.md) deep links remain valid for same-device fallback.
 
-**Framework:** [README_en.md](./README_en.md) · **Level 3:** [level-3-signed_en.md](./level-3-signed_en.md)
+**Framework:** [README_en.md](./README_en.md) · **Level 3:** [level-3-secure_en.md](./level-3-secure_en.md)
 
 ---
 
@@ -26,18 +26,48 @@ Level 1 same-device URLs are unchanged; SDK may use local track when acquirer pa
 
 ---
 
-## 2. NATS subject routing
+## 2. NATS subject routing (V1.6)
 
-| Direction | Subject pattern | Purpose |
-|-----------|-----------------|---------|
-| POS → Terminal | `lensing.terminal.{TID}.pay` | Payment request broadcast |
-| POS → Terminal | `lensing.terminal.{TID}.void` | Initiator voids entire attempt (not user cancel in acquirer UI) |
-| Terminal → POS | `lensing.terminal.{TID}.result` | Payment result / void ack (`metadata.cancelReason=initiator_void`) |
-| Terminal ↔ Terminal | `lensing.terminal.{TID}.claimed` | UI preemption (SDK internal; optional) |
+### 2.1 Fixed six-segment namespace (Scheme A)
 
-**Level 1 mapping:** same-device void uses `ezypos://void?…` — see [Level 1 §5.3](./level-1-deeplink_en.md#53-void--ezyposvoid-v15).
+```text
+lensing.{acquirerCode}.{merchantId}.{subMerchantId|_}.{terminalId}.{verb}
+```
 
-`{TID}` = Terminal ID registered in alliance Matrix.
+| Segment | Description |
+|---------|-------------|
+| `acquirerCode` | Acquirer / participant code (e.g. `SUPY`), uppercase |
+| `merchantId` | Merchant id; aligns with Level 1 `merchantid` / SDK `merchantId` |
+| `subMerchantId` | Sub-merchant; **`_` when absent** (reserved; real ids must not use `_`) |
+| `terminalId` | Terminal id within that merchant namespace |
+| `verb` | `pay` \| `result` \| `void` \| **refund** \| `claimed` |
+
+**Examples:**
+
+```text
+lensing.SUPY.abc123._.TID001.pay
+lensing.SUPY.abc123.REST01.TID001.result
+lensing.SUPY.abc123._.TID001.void
+lensing.SUPY.abc123._.TID001.refund
+```
+
+**Monitor subscribe:** `lensing.SUPY.abc123._.TID001.>` or `lensing.SUPY.abc123.>`
+
+Matrix registration key: `(acquirerCode, merchantId, subMerchantId|_, terminalId)`.
+
+### 2.2 Direction and verbs
+
+| Direction | `{verb}` | Purpose |
+|-----------|----------|---------|
+| POS → Terminal | `pay` | Payment request |
+| POS → Terminal | `void` | Initiator void |
+| POS → Terminal | **`refund`** | **Refund against original pay `orderId`** |
+| Terminal → POS | `result` | Pay/refund result / void ack |
+| Terminal ↔ Terminal | `claimed` | UI preemption (SDK internal) |
+
+**Level 1 mapping:** same-device void uses `ezypos://void?…` — [Level 1 §5.3](./level-1-deeplink_en.md#53-void--ezyposvoid-v15).
+
+> **Deprecated:** V1.4 `lensing.terminal.{TID}.{verb}` (no acquirer/merchant isolation). Greenfield deployments use V1.6 only.
 
 ---
 
@@ -52,6 +82,9 @@ Schema: [`schemas/payment-request.json`](./schemas/payment-request.json)
   "terminalId": "TID001",
   "orderId": "GM20260602001",
   "attemptId": "GM20260602001#1",
+  "acquirerCode": "SUPY",
+  "merchantId": "abc123",
+  "subMerchantId": "REST01",
   "amount": 1250,
   "currency": "USD",
   "targetPackageName": "com.ezypos.app",
@@ -62,7 +95,10 @@ Schema: [`schemas/payment-request.json`](./schemas/payment-request.json)
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `terminalId` | string | ✓ | Target terminal |
+| `acquirerCode` | string | ✓ | Acquirer code (subject segment 1) |
+| `merchantId` | string | ✓ | Merchant id (subject segment 2) |
+| `subMerchantId` | string | ✗ | Sub-merchant (segment 3; `_` when omitted) |
+| `terminalId` | string | ✓ | Target terminal (segment 4) |
 | `orderId` | string | ✓ | POS order id (Level 1 `orderid`) |
 | `attemptId` | string | ✓ | Dedupe key; default `{orderId}#1` |
 | `amount` | integer | ✓ | Minor units (cents) |
@@ -73,7 +109,35 @@ Schema: [`schemas/payment-request.json`](./schemas/payment-request.json)
 
 ---
 
-## 4. PaymentResult JSON
+## 5. RefundRequest JSON (V1.6)
+
+> Level 1 same-device: `ezypos://refund?amount=…&orderid=…` — [Level 1 §5.4](./level-1-deeplink_en.md#54-refund--ezyposrefund).
+
+Schema: [`schemas/refund-request.json`](./schemas/refund-request.json)
+
+```json
+{
+  "terminalId": "TID001",
+  "orderId": "GM20260602001",
+  "attemptId": "GM20260602001#refund",
+  "acquirerCode": "SUPY",
+  "merchantId": "abc123",
+  "amount": 1250,
+  "currency": "NZD"
+}
+```
+
+| Field | Notes |
+|-------|-------|
+| `orderId` | **Original pay** order id |
+| `attemptId` | Default `{orderId}#refund` (distinct from pay `#1`) |
+| Result | Still on **`.result`**; `metadata.operation=refund` or Level 1 `type=REFUND` callback |
+
+**Cross-device flow:** POS `PUBLISH …refund` → terminal launches `ezypos://refund` → terminal `PUBLISH …result` → POS callback.
+
+---
+
+## 6. PaymentResult JSON
 
 > Level 1 callback query: [Level 1 §6](./level-1-deeplink_en.md#6-reverse-callback-acquirer--pos) (`card_number` on deeplink success).
 
@@ -108,9 +172,11 @@ Schema: [`schemas/payment-result.json`](./schemas/payment-result.json)
 | `cancelReason` | `cancelled` | `cancel_reason` query param |
 | `cardLast4` | `approved` card pay | `card_number` query param |
 
+| `operation` | Refund | callback `type=REFUND` |
+
 ---
 
-## 5. Void wire flow
+## 7. Void wire flow
 
 ```mermaid
 sequenceDiagram
@@ -118,9 +184,9 @@ sequenceDiagram
     participant NATS as NATS
     participant B as Terminal / Kiosk (B)
 
-    A->>NATS: PUBLISH lensing.terminal.{TID}.void
-    Note over B: Soft void UI · optional ezypos://void for NFC
-    B->>NATS: PUBLISH lensing.terminal.{TID}.result<br>status=cancelled, cancelReason=initiator_void
+    A->>NATS: PUBLISH lensing.SUPY.abc123._.TID001.void
+    Note over B: Soft void · optional ezypos://void for NFC
+    B->>NATS: PUBLISH lensing.SUPY.abc123._.TID001.result<br>status=cancelled, cancelReason=initiator_void
     NATS-->>A: result delivered to subscriber
 ```
 
@@ -131,9 +197,9 @@ sequenceDiagram
 
 ---
 
-## 6. Gateway authentication (V1.4 symmetric HMAC — current)
+## 8. Gateway authentication (V1.4 symmetric HMAC — current)
 
-> **Roadmap:** Symmetric HMAC until Level 3 asymmetric model ships. Skip intermediate V1 symmetric-key Postgres hash path. Target: [Level 3](./level-3-signed_en.md).
+> **Roadmap:** Symmetric HMAC until Level 3 asymmetric model ships. Skip intermediate V1 symmetric-key Postgres hash path. Target: [Level 3](./level-3-secure_en.md).
 
 ```
 GET https://lensing.starrie.org/init?code=GPOS
@@ -252,11 +318,11 @@ sequenceDiagram
     Edge->>Redis: GET client:key:GPOS
     Edge-->>SDK: { nats_url, nats_token }
     SDK->>NATS: CONNECT
-    Note over SDK: Subscribe lensing.terminal.*.result
+    Note over SDK: Subscribe lensing.{acquirer}.{merchant}.{sub|_}.{TID}.result
 
     App->>SDK: pay(request)
-    SDK->>NATS: PUBLISH lensing.terminal.{TID}.pay
-    NATS-->>SDK: lensing.terminal.{TID}.result
+    SDK->>NATS: PUBLISH lensing.SUPY.abc123._.TID001.pay
+    NATS-->>SDK: lensing.SUPY.abc123._.TID001.result
     SDK-->>App: PaymentResult
 ```
 
@@ -308,7 +374,7 @@ sequenceDiagram
 | `/init` hot path (V1.4 HMAC) | — | `client:key:{CODE}` |
 | `/init` hot path (Level 3) | pubkey archive | `client:pubkey:{CODE}` |
 
-> Full asymmetric storage model: [Level 3 §4](./level-3-signed_en.md).
+> Full asymmetric storage model: [Level 3 §4](./level-3-secure_en.md).
 
 ---
 
@@ -328,3 +394,4 @@ sequenceDiagram
 |---------|--------|
 | V1.4 | NATS, JSON schemas, Gateway HMAC, state machine, Portal rotation |
 | V1.5 | **`.void`** subject; `metadata.cancelReason`; `cardLast4`; split Level 2 doc |
+| V1.6 | **Fixed 6-segment subjects**; `merchantId` / `acquirerCode` in JSON; `_` sub-merchant placeholder |

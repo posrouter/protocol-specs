@@ -1,13 +1,13 @@
-# Level 3 — Signed Lensing (Asymmetric) (V1.5)
+# Level 3 — Secure Lensing (Asymmetric) (V1.6)
 
 | Language | Document |
 |----------|----------|
-| 中文 | [level-3-signed_cn.md](./level-3-signed_cn.md) |
+| 中文 | [level-3-secure_cn.md](./level-3-secure_cn.md) |
 | English | **this page** |
 
 > **Audience:** Production alliance deployments requiring **non-repudiation**, client-generated key pairs, and Participant certificates. Self-implementation is difficult; **SDK strongly recommended**.
 
-**Prerequisite:** [Level 2](./level-2-lensing_en.md) NATS wire format unchanged; only Gateway `/init` authentication upgrades.
+**Prerequisite:** [Level 2](./level-2-lensing_en.md) Lensing wire format unchanged; only Gateway `/init` authentication upgrades.
 
 **Framework:** [README_en.md](./README_en.md)
 
@@ -23,7 +23,7 @@ Level 3 replaces symmetric HMAC `/init` (V1.4) with:
 - Digital signature on `/init` instead of HMAC
 - Alliance-signed **Participant certificates**
 
-NATS subjects and JSON payloads remain as defined in Level 2.
+Lensing subjects and JSON payloads remain as defined in Level 2.
 
 ---
 
@@ -92,7 +92,7 @@ POSRouter/1\nGPOS\n<timestamp>
 1. `GET Redis client:pubkey:GPOS` (or version via `X-PR-Key-Id`)
 2. Validate timestamp window
 3. `Ed25519.verify(public_key, message, signature)`
-4. Issue `nats_url` + `nats_token` (same response shape as V1.4)
+4. Issue Lensing network credentials (same response shape as V1.4)
 
 ---
 
@@ -158,7 +158,7 @@ Verification: SDK / third parties with alliance CA public key
 
 | Phase | Content |
 |-------|---------|
-| **Now (V1.5)** | Level 2 symmetric HMAC remains in production |
+| **Now (V1.6)** | Level 2 symmetric HMAC remains in production |
 | **Level 3 development** | SDK local keygen · Portal pubkey register · Edge Ed25519 verify · retire HMAC |
 | **Skip** | V1 intermediate Postgres `key_hash` + Redis ciphertext blob paths |
 
@@ -168,7 +168,7 @@ Verification: SDK / third parties with alliance CA public key
 
 ## 9. Level 3 limitations
 
-Signed `/init` authenticates **participant identity to Gateway**. Future work may extend signed envelopes to NATS message bodies; current V1.5 wire messages remain unsigned JSON on TLS + NATS token.
+Secure `/init` authenticates **participant identity to Gateway**. Future work may extend secure envelopes to Lensing message bodies; current V1.6 wire messages remain unsigned JSON on TLS + network token.
 
 ---
 
@@ -178,3 +178,4 @@ Signed `/init` authenticates **participant identity to Gateway**. Future work ma
 |---------|--------|
 | V1.4 | Asymmetric model specified in consolidated README |
 | V1.5 | Split Level 3 doc; align version labels; rollout greyscale notes |
+| V1.6 | Renamed **Secure** (`level-3-secure_*`, formerly `signed`) |

@@ -1,4 +1,4 @@
-# POSRouter / Lensing Protocol Specification (V1.5)
+# POSRouter / Lensing Protocol Specification (V1.6)
 
 > **POSRouter** is the outward-facing brand, package namespace, and API surface.
 > The underlying networking protocol is legally and technically named the **Lensing Protocol**.
@@ -16,9 +16,10 @@
 |---------|-------------------|---------|
 | **V1.1** | [spec-deeplink-v1.1.pdf](./spec-deeplink-v1.1.pdf) | GoMenu ↔ Ezypos same-device deep links: `connect` / `pay` / `refund` / `pay_result` callback |
 | **V1.4** | Alliance Lensing consolidated spec | Three integration levels; JSON payloads; NATS subjects; Gateway `/init` HMAC; panorama & routing diagrams |
-| **V1.5** | **Current** | Level 1 **`void`**; callback **`card_number`** (last 4 digits); per-level spec files; bilingual `_cn` / `_en` |
+| **V1.5** | Level 1 **`void`**, callback **`card_number`**, split per-level docs, bilingual |
+| **V1.6** | **Current (Level 2)** | Fixed 6-segment NATS subjects: `lensing.{acquirer}.{merchant}.{sub|_}.{tid}.{verb}` |
 
-> **Naming note:** The former README “V0.4” maps to spec **V1.4**; void + doc split is **V1.5**.
+> **Naming note:** Former README “V0.4” → spec **V1.4**; Level 1 void / doc split → **V1.5**; fixed 6-segment NATS subjects → **V1.6**.
 
 ---
 
@@ -32,7 +33,7 @@ This specification defines the Starrie **Lensing distributed payment orchestrati
 |-------|------|---------|---------|-----|
 | **1** | [level-1-deeplink_cn.md](./level-1-deeplink_cn.md) | [level-1-deeplink_en.md](./level-1-deeplink_en.md) | Same-device `ezypos://` / `gomenu://pay_result`; **connect / pay / refund / void** | Not required |
 | **2** | [level-2-lensing_cn.md](./level-2-lensing_cn.md) | [level-2-lensing_en.md](./level-2-lensing_en.md) | Gateway `/init` + NATS (`.pay` / `.result` / `.claimed` / **`.void`**) + JSON | Optional |
-| **3** | [level-3-signed_cn.md](./level-3-signed_cn.md) | [level-3-signed_en.md](./level-3-signed_en.md) | Level 2 + client asymmetric keys, signed envelopes, Participant certificates | Strongly recommended |
+| **3** | [level-3-secure_cn.md](./level-3-secure_cn.md) | [level-3-secure_en.md](./level-3-secure_en.md) | Level 2 + client asymmetric keys, secure envelopes, Participant certificates | Strongly recommended |
 
 **Upgrade path:** Level 1 → 2 does not break existing deep link URLs. Ship deeplink first; add NATS for cross-device or reliable void ack; adopt Level 3 for production alliance trust.
 
@@ -77,7 +78,7 @@ graph TD
 
     subgraph Scenario_2 ["Scenario 2: Cross-device (Level 2+)"]
         B -->|"Network track · NATS"| F["Lensing virtual network"]
-        F -->|"lensing.terminal.TID.pay"| G["Edge terminal A"]
+        F -->|"lensing.SUPY.merchant._.TID.pay"| G["Edge terminal A"]
         subgraph Remote_Sunmi ["Remote Sunmi"]
             G --> H["Kiosk / companion"]
             G --> I["Ezypos kernel"]
@@ -108,7 +109,7 @@ graph TD
 
     Check -- "No · remote" --> NetTrack["Level 2+ network track"]
     NetTrack --> Envelope["JSON · NATS publish"]
-    Envelope --> Broadcast["lensing.terminal.TID.pay"]
+    Envelope --> Broadcast["lensing.{acquirer}.{merchant}.{sub|_}.{TID}.pay"]
     Broadcast --> LaunchRemote([Remote terminal wakes])
 ```
 
@@ -120,4 +121,4 @@ graph TD
 |------|------------|
 | Fastest onboarding, same-device POS + Ezypos | [Level 1 English](./level-1-deeplink_en.md) |
 | Cross-device, kiosk, void ack | [Level 2 English](./level-2-lensing_en.md) |
-| Production alliance, asymmetric auth | [Level 3 English](./level-3-signed_en.md) |
+| Production alliance, asymmetric auth | [Level 3 English](./level-3-secure_en.md) |

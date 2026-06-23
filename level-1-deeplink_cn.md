@@ -132,7 +132,7 @@ startActivity(intent)
 
 **收单端行为：** 按 session 解析；活跃则停 NFC、置 `VOIDED`、复位 UI；已完成则忽略；可选回调 `cancel_reason=initiator_void`。
 
-跨机 void ack 见 [Level 2](./level-2-lensing_cn.md) NATS `.void`；同机仍须 `ezypos://void` 释放硬件。
+跨机 void ack 见 [Level 2](./level-2-lensing_cn.md) Lensing **`.void`**；同机仍须 `ezypos://void` 释放硬件。
 
 ### 5.4 Refund — `ezypos://refund`
 
@@ -235,8 +235,8 @@ sequenceDiagram
 
 | 能力 | Level 1 | Level 2+ |
 |------|---------|----------|
-| 跨机支付 | ✗ | NATS `.pay` |
-| 主叫 void + 终端 ack | 仅可选回调 | NATS `.void` + `.result` |
+| 跨机支付 | ✗ | Lensing `.pay` |
+| 主叫 void + 终端 ack | 仅可选回调 | Lensing `.void` + `.result` |
 | `attemptId` 去重 | 可选 | JSON 必填 |
 | Gateway `/init` | 不用 | 需要 |
 | 加密信封 | ✗ | Level 3 |

@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://posrouter.com/schemas/refund-request-v1.6.json",
+  "title": "RefundRequest",
+  "type": "object",
+  "required": ["terminalId", "orderId", "attemptId", "merchantId", "acquirerCode", "amount", "currency"],
+  "properties": {
+    "terminalId": { "type": "string" },
+    "orderId": { "type": "string", "description": "Original pay order id" },
+    "attemptId": { "type": "string", "description": "Default {orderId}#refund" },
+    "acquirerCode": { "type": "string" },
+    "merchantId": { "type": "string" },
+    "subMerchantId": { "type": "string" },
+    "amount": { "type": "integer" },
+    "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+    "targetPackageName": { "type": "string" },
+    "targetScheme": { "type": "string" },
+    "attemptCode": { "type": "string" }
+  }
+}

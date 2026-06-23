@@ -1,13 +1,13 @@
-# Level 3 — 签名 Lensing（非对称） (V1.5)
+# Level 3 — 安全 Lensing（非对称） (V1.6)
 
 | 语言 | 文档 |
 |------|------|
 | 中文 | **本页** |
-| English | [level-3-signed_en.md](./level-3-signed_en.md) |
+| English | [level-3-secure_en.md](./level-3-secure_en.md) |
 
 > **适用对象：** 生产联盟环境，需要 **不可抵赖**、客户端生成密钥对、Participant 证书。自行实现难度高，**强烈建议使用 SDK**。
 
-**前置：** [Level 2](./level-2-lensing_cn.md) NATS 有线格式不变；仅 Gateway `/init` 鉴权升级。
+**前置：** [Level 2](./level-2-lensing_cn.md) Lensing 报文格式不变；仅 Gateway `/init` 鉴权升级。
 
 **总览：** [README_cn.md](./README_cn.md)
 
@@ -23,7 +23,7 @@ Level 3 将 V1.4 对称 HMAC `/init` 替换为：
 - `/init` 使用 **数字签名** 替代 HMAC
 - 联盟签名的 **Participant 证书**
 
-NATS Subject 与 JSON 载荷仍按 Level 2 定义。
+Lensing Subject 与 JSON 载荷仍按 Level 2 定义。
 
 ---
 
@@ -92,7 +92,7 @@ POSRouter/1\nGPOS\n<timestamp>
 1. `GET Redis client:pubkey:GPOS`（或按 `X-PR-Key-Id` 取版本）
 2. 校验时间戳窗口
 3. `Ed25519.verify(public_key, message, signature)`
-4. 签发 `nats_url` + `nats_token`（响应形态与 V1.4 相同）
+4. 签发 Lensing 入网地址与令牌（响应形态与 V1.4 相同）
 
 ---
 
@@ -158,7 +158,7 @@ sequenceDiagram
 
 | 阶段 | 内容 |
 |------|------|
-| **现在（V1.5）** | Level 2 对称 HMAC 继续用于生产 |
+| **现在（V1.6）** | Level 2 对称 HMAC 继续用于生产 |
 | **Level 3 开发** | SDK 本地 keygen · Portal 公钥注册 · Edge Ed25519 验签 · 退役 HMAC |
 | **跳过** | V1 中间态 Postgres `key_hash` + Redis 密文 blob 路径 |
 
@@ -168,7 +168,7 @@ sequenceDiagram
 
 ## 9. Level 3 边界说明
 
-签名 `/init` 认证 **参与者身份与 Gateway**。未来可扩展 NATS 消息体签名信封；当前 V1.5 有线消息仍为 TLS + NATS token 保护下的未签名 JSON。
+安全 `/init` 认证 **参与者身份与 Gateway**。未来可扩展 Lensing 消息体安全信封；当前 V1.6 Lensing 报文经 TLS 与入网令牌保护，JSON 载荷本身未签名。
 
 ---
 
@@ -178,3 +178,4 @@ sequenceDiagram
 |------|------|
 | V1.4 | 非对称模型写在整合 README 中 |
 | V1.5 | 独立 Level 3 文档；统一版本号；补充灰度说明 |
+| V1.6 | 文档更名 **Secure**（`level-3-secure_*`）；弱化底层实现称谓 |
