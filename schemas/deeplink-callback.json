@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://posrouter.com/schemas/deeplink-callback-v1.5.json",
+  "title": "Level1DeepLinkCallback",
+  "description": "Query parameters for acquirer → POS reverse deeplink (e.g. gomenu://pay_result)",
+  "type": "object",
+  "required": ["type", "status"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["PAY", "REFUND", "CONNECT"]
+    },
+    "status": {
+      "type": "string",
+      "description": "Uppercase in legacy Ezypos; POSRouter SDK also accepts lowercase"
+    },
+    "orderid": { "type": "string" },
+    "orderId": { "type": "string" },
+    "transactionid": { "type": "string" },
+    "transactionId": { "type": "string" },
+    "attemptid": { "type": "string" },
+    "attemptId": { "type": "string" },
+    "card_number": {
+      "type": "string",
+      "description": "Last 4 digits or masked tail (e.g. 4242 or ****4242) on approved card pay; V1.5"
+    },
+    "cancel_reason": {
+      "type": "string",
+      "enum": ["user_cancel", "initiator_void"]
+    },
+    "message": { "type": "string" }
+  }
+}

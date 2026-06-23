@@ -1,10 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://posrouter.com/schemas/payment-result-v1.5.json",
   "title": "PaymentResult",
   "type": "object",
   "required": ["terminalId", "status", "amount", "currency"],
   "properties": {
     "terminalId": { "type": "string" },
+    "orderId": { "type": "string" },
+    "attemptId": { "type": "string" },
     "status": {
       "type": "string",
       "enum": ["approved", "declined", "cancelled", "error"]
@@ -12,6 +15,19 @@
     "transactionId": { "type": "string" },
     "amount": { "type": "integer" },
     "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
-    "message": { "type": "string" }
+    "message": { "type": "string" },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "cancelReason": {
+          "type": "string",
+          "enum": ["user_cancel", "initiator_void"]
+        },
+        "cardLast4": {
+          "type": "string",
+          "description": "Last 4 digits of card; Level 1 equivalent: card_number"
+        }
+      }
+    }
   }
 }

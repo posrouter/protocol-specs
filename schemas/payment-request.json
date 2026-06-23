@@ -1,17 +1,17 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://posrouter.com/schemas/payment-request-v1.5.json",
   "title": "PaymentRequest",
   "type": "object",
-  "required": ["terminalId", "amount", "currency"],
+  "required": ["terminalId", "orderId", "attemptId", "amount", "currency"],
   "properties": {
     "terminalId": { "type": "string" },
+    "orderId": { "type": "string" },
+    "attemptId": { "type": "string" },
     "amount": { "type": "integer" },
     "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
     "targetPackageName": { "type": "string" },
     "targetScheme": { "type": "string" },
-    "metadata": {
-      "type": "object",
-      "additionalProperties": { "type": "string" }
-    }
+    "metadata": { "type": "object" }
   }
 }
