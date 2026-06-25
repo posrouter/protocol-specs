@@ -24,6 +24,29 @@ Level 2 adds:
 
 Level 1 same-device URLs are unchanged; SDK may use local track when acquirer package is present.
 
+### 1.1 Android SDK route preference
+
+When using the **POSRouter Android SDK**, apps can set runtime priority between the Level 1 local track and Level 2 Lensing wire. Values are **strings** (aligned with deeplink / JSON field style). They are **not** included on NATS subjects or wire JSON payloads.
+
+| Value | Constant | `connect` / `pay` / `refund` |
+|-------|----------|------------------------------|
+| `auto` | `RoutePreference.AUTO` | **Default.** Try local when acquirer not cached unreachable → on failure publish to Lensing |
+| `local_first` | `RoutePreference.LOCAL_FIRST` | Always try local first (ignore unreachable cache) → on failure Lensing |
+| `remote_first` | `RoutePreference.REMOTE_FIRST` | Skip local; Lensing only |
+| `local_only` | `RoutePreference.LOCAL_ONLY` | Local only; `LOCAL_ACQUIRER_UNAVAILABLE` on failure |
+| `remote_only` | `RoutePreference.REMOTE_ONLY` | Lensing only; never launch local acquirer |
+
+```kotlin
+POSRouter.setRoutePreference(RoutePreference.REMOTE_FIRST)
+POSRouter.connect(activity, callback, routePreference = "remote_first")  // optional third arg
+```
+
+- Omitted, blank, or unknown values → `auto` (case-insensitive; `local-first` ≡ `local_first`).
+- `initialize()` resets preference to `auto`.
+- `voidPayment()` always uses Lensing and is unaffected.
+
+> **Relation to §4.2 routing diagram:** The spec diagram shows the Matrix-driven ideal path; SDK **`auto`** aligns with it. Use **`remote_first`** when the initiator must always delegate to a remote terminal (e.g. tablet orders, counter terminal pays).
+
 ---
 
 ## 2. NATS subject routing (V1.6)

@@ -113,6 +113,8 @@ graph TD
     Broadcast --> LaunchRemote([远端终端亮屏刷卡])
 ```
 
+> **Android SDK：** 默认 **`auto`**（本机乐观拉起 → 失败走 Lensing）。应用可通过 `RoutePreference` 字符串覆盖（如平板固定 **`remote_first`**）。详见 [Level 2 §1.1](./level-2-lensing_cn.md#11-android-sdk-路由偏好route-preference) 与 [sdk-android README](../sdk-android/README.md#route-preference)。
+
 ---
 
 ## 5. 阅读指引

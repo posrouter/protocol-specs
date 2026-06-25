@@ -24,6 +24,29 @@ Level 2 在 Level 1 之上增加：
 
 Level 1 同机 URL 不变；SDK 检测到本机收单包时可走本地轨道。
 
+### 1.1 Android SDK 路由偏好（Route preference）
+
+集成 **POSRouter Android SDK** 时，可在运行时选择本地轨道（Level 1）与跨机 Lensing（Level 2）的优先级。取值为 **字符串**（与 deeplink / JSON 字段风格一致），不写入 NATS Subject 或 wire JSON。
+
+| 值 | 常量 | `connect` / `pay` / `refund` |
+|----|------|------------------------------|
+| `auto` | `RoutePreference.AUTO` | **默认。** 收单库未缓存为不可达 → 先试本机 → 失败发 Lensing |
+| `local_first` | `RoutePreference.LOCAL_FIRST` | 强制先试本机（忽略不可达缓存）→ 失败发 Lensing |
+| `remote_first` | `RoutePreference.REMOTE_FIRST` | 跳过本机，直接 Lensing |
+| `local_only` | `RoutePreference.LOCAL_ONLY` | 仅本机；失败返回 `LOCAL_ACQUIRER_UNAVAILABLE` |
+| `remote_only` | `RoutePreference.REMOTE_ONLY` | 仅 Lensing；不拉起本机收单 App |
+
+```kotlin
+POSRouter.setRoutePreference(RoutePreference.REMOTE_FIRST)
+POSRouter.connect(activity, callback, routePreference = "remote_first")  // 可选第三参数
+```
+
+- 未指定、空串或未知值 → `auto`（大小写不敏感；`local-first` 与 `local_first` 等价）。
+- `initialize()` 会将偏好重置为 `auto`。
+- `voidPayment()` 始终走 Lensing，不受此设置影响。
+
+> **与 §4.2 路由图的关系：** 规范层描述 Matrix 探测后的理想路径；SDK **`auto`** 与之对齐。平板下单、柜台收款等场景可设 **`remote_first`** 强制跨机。
+
 > **术语：** 英文 **Wire** 指 Lensing **链路上传输的报文格式**（JSON），**不是**物理有线/无线之分。中文档称 **网络传输** / **跨机（Lensing）**。底层消息总线由 SDK 封装，合作方以 **Lensing Subject + JSON** 为准即可。
 
 ---

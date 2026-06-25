@@ -113,6 +113,8 @@ graph TD
     Broadcast --> LaunchRemote([Remote terminal wakes])
 ```
 
+> **Android SDK:** Default is **`auto`** (optimistic local launch → Lensing fallback). Apps override via `RoutePreference` strings (e.g. **`remote_first`** for tablet initiators). See [Level 2 §1.1](./level-2-lensing_en.md#11-android-sdk-route-preference) and [sdk-android README](../sdk-android/README.md#route-preference).
+
 ---
 
 ## 5. Where to start
