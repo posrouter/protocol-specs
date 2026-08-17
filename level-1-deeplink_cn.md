@@ -117,6 +117,7 @@ startActivity(intent)
 | `remark` | ✗ | 展示 / 小票备注 |
 | `attemptid` | ✗ | 支付尝试 id（与 Level 2 对齐；默认 `{orderid}#1`） |
 | `callback_url` | ✗ | 覆盖 connect 时注册的回调 |
+| `caller_package` | ✗ | 主叫方自己的 Android 包名；收单端在反向回调无法送达时用它把 POS 拉回前台。SHOULD 填 —— `getReferrer()` 在 warm `onNewIntent` 上拿不到本次调用方（`mReferrer` 只在 activity 创建时赋值一次） |
 
 收单端：创建/恢复 session；若已完成则 `DUPLICATE_ORDER_ID`；终态时反向回调（§6）。
 
