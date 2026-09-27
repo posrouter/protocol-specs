@@ -153,6 +153,7 @@ Optional immediate callback: `gomenu://pay_result?type=CONNECT&status=SUCCESS`
 | `remark` | ✗ | Display / receipt hint |
 | `attemptid` | ✗ | Payment try id (Level 2 alignment; default `{orderid}#1`) |
 | `callback_url` | ✗ | Override connect-time callback |
+| `caller_package` | ✗ | The initiator's own Android package name; the acquirer uses it to bring the POS back to the front when the reverse callback cannot be delivered. SHOULD be sent — `getReferrer()` does not identify the caller of a warm `onNewIntent` (`mReferrer` is assigned once, at activity creation) |
 
 ```text
 ezypos://pay?amount=666.66&currency=NZD&orderid=GM20260602001&remark=Table%205&method=emv_card
