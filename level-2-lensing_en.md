@@ -235,7 +235,7 @@ Success:
 
 ```json
 {
-  "nats_url": "nats://router.starrie.org:4222",
+  "nats_url": "nats://lensing.posrouter.com:4222",
   "nats_token": "TOKEN_GPOS_<SECRET_SALT>"
 }
 ```
