@@ -194,8 +194,30 @@ Schema: [`schemas/payment-result.json`](./schemas/payment-result.json)
 |----------------|------|-------------------|
 | `cancelReason` | `cancelled` | `cancel_reason` query param |
 | `cardLast4` | `approved` card pay | `card_number` query param |
+| `surcharge` | `approved`, terminal added a card fee | `surcharge` query param — minor units (cents) |
+| `tip` | `approved`, terminal collected a tip | `tip` query param — minor units (cents) |
 
 | `operation` | Refund | callback `type=REFUND` |
+
+### 6.1 Amount semantics (`amount`, `surcharge`, `tip`)
+
+`amount` is **the total the acquirer actually charged the card, in minor units** — i.e. it already
+**includes** any `surcharge` and any `tip` the terminal added. It is NOT the pre-fee item subtotal.
+
+```
+amount == base + surcharge + tip
+```
+
+- `base` (the item subtotal / what the initiator requested) is `amount − surcharge − tip`; it is not
+  sent as its own field — derive it.
+- `surcharge` / `tip` are present in `metadata` only when non-zero (most card sales carry neither).
+- A refund (`.refund` / Level 1 `ezypos://refund`) reverses against this same charged `amount`; its own
+  `amount` is the minor-unit figure to refund (≤ remaining), taken literally by the gateway — it is not
+  auto-grossed-up for surcharge.
+
+Consumers that reconcile a recovered/relayed result against an order's own base total **must subtract
+`surcharge` and `tip` from `amount` before comparing** — treating `amount` as the base would read
+systematically high and, on the recovery path, mis-classify a plain card+fee sale as a mixed payment.
 
 ---
 

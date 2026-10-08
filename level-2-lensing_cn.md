@@ -196,7 +196,25 @@ Schema：[`schemas/payment-result.json`](./schemas/payment-result.json)
 |----------------|------|--------------|
 | `cancelReason` | `cancelled` | `cancel_reason` |
 | `cardLast4` | 卡支付 `approved` | `card_number` |
+| `surcharge` | `approved`、终端加收刷卡费 | `surcharge`，最小单位（分） |
+| `tip` | `approved`、终端收取小费 | `tip`，最小单位（分） |
 | **`operation`** | 退款 | 回调 `type=REFUND` |
+
+### 5.1 金额语义（`amount` / `surcharge` / `tip`）
+
+`amount` 是**收单端实际向卡扣取的总额（最小单位/分）**——已经**包含** `surcharge` 和 `tip`，
+**不是**未加费的商品小计。
+
+```
+amount == 基价 + surcharge + tip
+```
+
+- 基价（商品小计 / 主叫请求额）= `amount − surcharge − tip`，不单独下发，自行推算。
+- `surcharge` / `tip` 仅在非零时出现在 `metadata`（多数卡单两者皆无）。
+- 退款（`.refund` / Level 1 `ezypos://refund`）按同一 `amount` 原路冲回；其 `amount` 即要退的分值
+  （≤ 剩余可退），网关严格按传入值退，**不会**为附加费自动抬高。
+- 消费方若要把「恢复/中继回来的结果」与某单自身的基价核对，**必须先从 `amount` 减掉 `surcharge` 和 `tip`
+  再比**——把 `amount` 当基价会系统性偏高，并在恢复路径上把「纯卡+费」误判成混合支付。
 
 ---
 
