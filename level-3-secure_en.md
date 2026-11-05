@@ -90,7 +90,7 @@ POSRouter/1\nGPOS\n<timestamp>
 **Edge verification:**
 
 1. `GET Redis client:pubkey:GPOS` (or version via `X-PR-Key-Id`)
-2. Validate timestamp window
+2. Validate timestamp window (same bounds as Level 2: 5 minutes behind to 1 minute ahead; a wrong device clock is refused with `CLOCK_SKEW`)
 3. `Ed25519.verify(public_key, message, signature)`
 4. Issue Lensing network credentials (same response shape as V1.4)
 

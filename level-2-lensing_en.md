@@ -268,6 +268,19 @@ Success:
 | Redis | `client:key:{CODE}` = plaintext `key` |
 | Transport | Never send `key`; only timestamp + signature |
 | Signature | `HMAC-SHA256(key, key + timestamp)` → hex |
+| Device clock | Must be accurate. `X-PR-Timestamp` is the device clock. Accepted only from 5 minutes behind the gateway through 1 minute ahead |
+
+The device clock is the source of transaction timestamps, so a financial terminal is not allowed to sign in with a wrong clock. Outside the window, `/init` returns HTTP 401 and does not issue credentials:
+
+```json
+{
+  "error": "Invalid or expired timestamp",
+  "code": "CLOCK_SKEW",
+  "server_time": 1718800000000
+}
+```
+
+`server_time` is the gateway clock in Unix milliseconds, so the client can say how far ahead or behind the device is. The client must show that sign-in was refused because the clock is wrong, and must not sign a new request with an adjusted timestamp to get past the check. Turning on automatic network time does not satisfy the check: sign-in stays refused until the system clock itself is inside the window. A bad signature or an unknown participant is a different 401 or 403 and does not use `CLOCK_SKEW`.
 
 ---
 

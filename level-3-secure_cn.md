@@ -90,7 +90,7 @@ POSRouter/1\nGPOS\n<timestamp>
 **Edge 验签：**
 
 1. `GET Redis client:pubkey:GPOS`（或按 `X-PR-Key-Id` 取版本）
-2. 校验时间戳窗口
+2. 校验时间戳窗口（与 Level 2 相同：早最多 5 分钟、晚最多 1 分钟；时钟不准时以 `CLOCK_SKEW` 拒绝）
 3. `Ed25519.verify(public_key, message, signature)`
 4. 签发 Lensing 入网地址与令牌（响应形态与 V1.4 相同）
 

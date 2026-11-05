@@ -265,6 +265,19 @@ Headers:
 | Redis | `client:key:{CODE}` = 明文 `key` |
 | 传输 | **不传** `key`；仅 timestamp + signature |
 | 签名 | `HMAC-SHA256(key, key + timestamp)` → hex |
+| 设备时钟 | 必须准确。`X-PR-Timestamp` 取自设备时钟，只接受比网关早最多 5 分钟、晚最多 1 分钟 |
+
+设备时钟是交易时间的来源。金融终端时钟不准时不允许登录。超出窗口时 `/init` 返回 HTTP 401，不签发凭证：
+
+```json
+{
+  "error": "Invalid or expired timestamp",
+  "code": "CLOCK_SKEW",
+  "server_time": 1718800000000
+}
+```
+
+`server_time` 是网关时钟的 Unix 毫秒，客户端用它说明本机快了或慢了多少。客户端必须把这次失败显示为时钟不准导致拒绝登录，不得改用对齐后的时间戳重新签名来绕过。打开「自动获取网络时间」不算通过：系统时钟本身回到窗口内之前，登录一直被拒绝。签名错误或未知参与者是另一类 401 或 403，不使用 `CLOCK_SKEW`。
 
 ---
 
